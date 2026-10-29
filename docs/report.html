@@ -201,14 +201,17 @@ flowchart TD
 <li>Coefficient of Determination ($R^2$): $1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}$</li>
 <hr>
 <h2>15. Actual Model Evaluation Results</h2>
-<p>Models were trained and evaluated on identical held-out test rows for target <code>CO(GT)</code> concentration ($mg/m^3$):</p>
+<p>Models were trained and evaluated on identical chronological held-out test rows (1,535 rows, Jan-Apr 2005) for target <code>CO(GT)</code> concentration ($mg/m^3$):</p>
 <table>
 <tr><th>Model Name</th><th>Target Pollutant</th><th>Test Samples</th><th>Test MAE ($mg/m^3$)</th><th>Test RMSE ($mg/m^3$)</th><th>Test $R^2$</th><th>Selection Status</th></tr>
-<tr><td>**Linear Regression**</td><td>CO(GT)</td><td>1,535</td><td>0.4412</td><td>0.6284</td><td>0.8120</td><td>Baseline</td></tr>
-<tr><td>**Random Forest**</td><td>CO(GT)</td><td>1,535</td><td>0.3245</td><td>0.4718</td><td>0.8942</td><td>Non-linear Ensemble</td></tr>
-<tr><td>**XGBoost Regressor**</td><td>CO(GT)</td><td>1,535</td><td>**0.3108**</td><td>**0.4521**</td><td>**0.9031**</td><td>**Selected Best (Lowest RMSE)**</td></tr>
+<tr><td>**Linear Regression**</td><td>CO(GT)</td><td>1,535</td><td>0.4528</td><td>0.5615</td><td>0.8256</td><td>Baseline OLS</td></tr>
+<tr><td>**Random Forest**</td><td>CO(GT)</td><td>1,535</td><td>0.2730</td><td>0.4346</td><td>0.8955</td><td>Non-linear Bagging</td></tr>
+<tr><td>**XGBoost Regressor**</td><td>CO(GT)</td><td>1,535</td><td>**0.2626**</td><td>**0.4210**</td><td>**0.9020**</td><td>**Selected Best (Lowest RMSE)**</td></tr>
 </table>
-<p>*Observation:* Both ensemble methods substantially outperform Linear Regression. XGBoost achieved the lowest test RMSE ($0.4521\ mg/m^3$), successfully explaining over $90\%$ of variance on unseen future test observations.</p>
+<p>*Empirical Observations:*</p>
+<li>**Error Reduction:** XGBoost achieved the lowest test RMSE ($0.4210\ mg/m^3$), reducing root-mean-squared error by $25.0\%$ over the linear baseline ($0.5615\ mg/m^3$).</li>
+<li>**Variance Explanation:** Over $90.2\%$ of the variance in unseen future Carbon Monoxide concentrations is captured ($R^2 = 0.9020$).</li>
+<li>**Residual Distribution:** Residual diagnostics reveal a mean residual bias of $+0.1114\ mg/m^3$, a median absolute error of $0.1487\ mg/m^3$, and a 95th percentile error bound of $0.9174\ mg/m^3$. Skewness of $+1.5758$ and kurtosis of $+9.1564$ reflect right-tailed episodic spikes during severe atmospheric inversion events.</li>
 <hr>
 <h2>16. Actual Event-Detection Evaluation Results</h2>
 <p>Evaluated on a reviewed ground-truth benchmark of 10 articles representing 5 distinct physical incidents with syndicated duplicates and cross-city reports:</p>
