@@ -164,7 +164,20 @@ def render_sidebar(repo: PollutionRepository) -> str:
         "Project Documentation",
     ]
 
-    choice = st.sidebar.radio("Navigation", menu_options, index=0)
+    default_idx = 0
+    try:
+        page_param = st.query_params.get("page", "")
+        if page_param:
+            for idx, opt in enumerate(menu_options):
+                norm_opt = opt.lower().replace(" ", "_").replace("&_", "")
+                norm_param = page_param.lower().replace(" ", "_").replace("&_", "")
+                if norm_opt == norm_param or opt.lower() == page_param.lower() or norm_param in norm_opt:
+                    default_idx = idx
+                    break
+    except Exception:
+        pass
+
+    choice = st.sidebar.radio("Navigation", menu_options, index=default_idx)
 
     st.sidebar.markdown("---")
     st.sidebar.subheader("System Telemetry")

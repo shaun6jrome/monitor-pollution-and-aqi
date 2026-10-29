@@ -52,19 +52,31 @@ def capture_screenshot(url: str, output_path: Path, wait_seconds: int = 6, width
 
 
 def run_capture_suite(port: int = 8501) -> None:
-    """Capture suite of dashboard screenshots."""
+    """Capture suite of dashboard screenshots across all key operational pages."""
     SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
     base_url = f"http://localhost:{port}"
 
-    logger.info("Capturing desktop dashboard overview from %s...", base_url)
-    overview_path = SCREENSHOT_DIR / "dashboard_overview.png"
-    capture_screenshot(base_url, overview_path, wait_seconds=6, width=1440, height=900)
+    pages = [
+        ("dashboard_overview.png", f"{base_url}/?page=overview"),
+        ("page_news_intelligence.png", f"{base_url}/?page=news_intelligence"),
+        ("page_event_explorer.png", f"{base_url}/?page=pollution_event_explorer"),
+        ("page_geographic_view.png", f"{base_url}/?page=geographic_view"),
+        ("page_ml_laboratory.png", f"{base_url}/?page=ml_laboratory"),
+        ("page_forecasting.png", f"{base_url}/?page=forecasting"),
+        ("page_innovation.png", f"{base_url}/?page=innovation_evaluation"),
+    ]
 
+    for filename, url in pages:
+        logger.info("Capturing %s from %s...", filename, url)
+        output_path = SCREENSHOT_DIR / filename
+        capture_screenshot(url, output_path, wait_seconds=5, width=1440, height=900)
+
+    # Tablet view
     logger.info("Capturing tablet view from %s...", base_url)
     tablet_path = SCREENSHOT_DIR / "dashboard_tablet.png"
-    capture_screenshot(base_url, tablet_path, wait_seconds=6, width=1024, height=768)
+    capture_screenshot(base_url, tablet_path, wait_seconds=5, width=1024, height=768)
 
-    print(f"Screenshots saved to {SCREENSHOT_DIR}")
+    print(f"All page screenshots saved to {SCREENSHOT_DIR}")
 
 
 if __name__ == "__main__":
