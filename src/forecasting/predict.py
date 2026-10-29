@@ -159,3 +159,50 @@ class ModelPredictor:
                 "error": str(e),
                 "prediction": None,
             }
+
+    def predict_multi_step(self, initial_features: Dict[str, Any], steps: int = 6) -> Dict[str, Any]:
+        """Perform recursive multi-step ahead autoregressive forecasting."""
+        if not self.is_loaded or self.pipeline is None:
+            return {
+                "status": "NOT_LOADED",
+                "error": f"Model artifact '{self.model_name}' is not trained or loaded yet.",
+                "forecasts": [],
+            }
+
+        steps = max(1, min(steps, 24))  # bounded up to 24 hours
+        current_inputs = dict(initial_features)
+        forecast_trajectory = []
+
+        curr_hour = int(current_inputs.get("hour", 12))
+
+        for step in range(1, steps + 1):
+            curr_inputs_step = dict(current_inputs)
+            curr_inputs_step["hour"] = (curr_hour + step - 1) % 24
+
+            pred_res = self.predict(curr_inputs_step)
+            if pred_res["status"] != "SUCCESS":
+                return {
+                    "status": "ERROR",
+                    "error": f"Multi-step forecast failed at step {step}: {pred_res.get('error')}",
+                    "forecasts": forecast_trajectory,
+                }
+
+            val = pred_res["predicted_value"]
+            forecast_trajectory.append({
+                "step": step,
+                "hour": curr_inputs_step["hour"],
+                "predicted_value": val,
+                "unit": self.target_unit,
+            })
+
+            # Autoregressive update: feedback predicted concentration to lag feature
+            lag_key = f"{self.target_col}_lag_1"
+            current_inputs[lag_key] = val
+
+        return {
+            "status": "SUCCESS",
+            "model_name": self.model_name,
+            "target_pollutant": self.target_col,
+            "total_steps": steps,
+            "forecasts": forecast_trajectory,
+        }
