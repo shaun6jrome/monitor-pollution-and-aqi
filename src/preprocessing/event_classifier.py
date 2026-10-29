@@ -176,3 +176,59 @@ class PollutionClassifier:
                 "method": "domain_lexicon_heuristic",
                 "explanation": "No environmental pollution terms detected in text.",
             }
+
+    def explain_prediction(self, title: str, content: Optional[str] = None) -> Dict[str, Any]:
+        """Provide detailed feature-level attribution and evidence for classification."""
+        base_result = self.classify_text(title=title, content=content)
+        combined = normalize_text(f"{title} {content or ''}")
+
+        matched_strong = [w for w in POLLUTION_KEYWORDS["strong"] if w in combined]
+        matched_moderate = [w for w in POLLUTION_KEYWORDS["moderate"] if w in combined]
+
+        feature_contributions = []
+        if self.is_trained and self.vectorizer and self.classifier:
+            try:
+                x = self.vectorizer.transform([combined])
+                feature_names = self.vectorizer.get_feature_names_out()
+                coefs = self.classifier.coef_[0]
+
+                # Extract non-zero features
+                cx = x.tocoo()
+                for col, val in zip(cx.col, cx.data):
+                    feat = feature_names[col]
+                    weight = float(coefs[col])
+                    impact = round(weight * val, 4)
+                    feature_contributions.append({
+                        "feature": feat,
+                        "weight": round(weight, 4),
+                        "tf_idf_val": round(val, 4),
+                        "contribution": impact,
+                    })
+                feature_contributions.sort(key=lambda item: abs(item["contribution"]), reverse=True)
+            except Exception as e:
+                logger.warning("Error generating feature contributions: %s", e)
+
+        return {
+            "label": base_result["label"],
+            "label_name": "Pollution-Related" if base_result["label"] == 1 else ("Not Pollution" if base_result["label"] == 0 else "Uncertain"),
+            "confidence": base_result["confidence"],
+            "method": base_result["method"],
+            "explanation": base_result["explanation"],
+            "matched_strong_keywords": matched_strong,
+            "matched_moderate_keywords": matched_moderate,
+            "top_features": feature_contributions[:10],
+        }
+
+    def batch_classify(self, articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Classify a list of article dictionaries and return updated records."""
+        results = []
+        for art in articles:
+            res = self.classify_text(title=art.get("title", ""), content=art.get("content_normalized"))
+            results.append({
+                "article_id": art.get("id"),
+                "label": res["label"],
+                "confidence": res["confidence"],
+                "method": res["method"],
+                "explanation": res["explanation"],
+            })
+        return results
