@@ -102,3 +102,20 @@ def test_cpcb_successful_fetch_and_storage(tmp_path):
         stored = repo.get_latest_cpcb_observations(limit=10)
         assert len(stored) == 2
         assert any(s["station_name"] == "SIDCO Kurichi, Coimbatore - TNPCB" for s in stored)
+
+
+def test_cpcb_source_metadata():
+    client = CPCBClient(api_key="")
+    meta = client.get_source_metadata()
+    assert meta["source_name"] == "Central Pollution Control Board (CPCB) / data.gov.in"
+    assert "PM2.5" in meta["monitored_parameters"]
+    assert "data.gov.in" in meta["instructions"]
+
+
+def test_cpcb_feed_diagnostics():
+    client = CPCBClient(api_key="")
+    diag = client.diagnose_feed()
+    assert diag["configured"] is False
+    assert diag["status"] == "NOT_CONFIGURED"
+    assert "latency_ms" in diag
+    assert diag["latency_ms"] >= 0.0

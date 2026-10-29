@@ -204,3 +204,36 @@ class CPCBClient:
                 "error": str(e),
                 "portal_url": self.portal_url,
             }
+
+    def get_source_metadata(self) -> Dict[str, Any]:
+        """Return provenance, update frequency, and access metadata for CPCB."""
+        return {
+            "source_name": "Central Pollution Control Board (CPCB) / data.gov.in",
+            "jurisdiction": "Government of India - Ministry of Environment, Forest and Climate Change",
+            "portal_url": self.portal_url,
+            "api_endpoint": self.api_base_url,
+            "data_license": "Government Open Data License - India (GODL)",
+            "update_cadence": "Hourly continuous ambient monitoring updates",
+            "monitored_parameters": ["PM2.5", "PM10", "NO2", "SO2", "CO", "OZONE", "NH3"],
+            "configured": bool(self.api_key),
+            "instructions": (
+                "To connect live Indian monitoring feeds, register at https://data.gov.in, "
+                "request access to 'Real-Time Air Quality Index', and set DATA_GOV_IN_API_KEY in .env."
+            ),
+        }
+
+    def diagnose_feed(self) -> Dict[str, Any]:
+        """Run diagnostic health check and measure latency."""
+        start_ts = datetime.now(timezone.utc).timestamp()
+        status_info = self.check_connection_status()
+        end_ts = datetime.now(timezone.utc).timestamp()
+        latency_ms = round((end_ts - start_ts) * 1000, 2)
+
+        return {
+            "status": status_info["status"],
+            "configured": status_info["configured"],
+            "latency_ms": latency_ms,
+            "portal_url": self.portal_url,
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+            "message": status_info["message"],
+        }
