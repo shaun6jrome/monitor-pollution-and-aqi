@@ -138,8 +138,15 @@ def match_event_candidates(
         reasons.append(f"Rejected: Conflicting pollution source categories ('{cat_a}' vs '{cat_b}').")
     elif semantic_sim >= similarity_threshold:
         is_match = True
-        combined_score = semantic_sim
-        reasons.append(f"Matched: Semantic similarity {semantic_sim:.2f} >= threshold {similarity_threshold}.")
+        decay = 1.0
+        if time_delta is not None and max_temporal_hours > 0:
+            norm_delta = min(time_delta, max_temporal_hours) / max_temporal_hours
+            decay = 1.0 - 0.25 * norm_delta
+        combined_score = semantic_sim * decay
+        reasons.append(
+            f"Matched: Semantic similarity {semantic_sim:.2f} >= threshold {similarity_threshold} "
+            f"(temporal decay factor {decay:.2f}, combined affinity {combined_score:.2f})."
+        )
     else:
         is_match = False
         reasons.append(f"Rejected: Semantic similarity {semantic_sim:.2f} below threshold {similarity_threshold}.")
