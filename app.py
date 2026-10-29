@@ -271,6 +271,7 @@ def page_overview(repo: PollutionRepository):
         st.subheader("Official Indian Air Quality Status")
         cpcb_client = CPCBClient(repository=repo)
         cpcb_status = cpcb_client.check_connection_status()
+        cpcb_meta = cpcb_client.get_source_metadata()
 
         if cpcb_status["configured"]:
             st.success(f"Status: {cpcb_status['status']}")
@@ -290,6 +291,22 @@ def page_overview(repo: PollutionRepository):
                 """,
                 unsafe_allow_html=True,
             )
+
+        with st.expander("Official Data Source Governance & Access Guide"):
+            st.markdown(
+                f"""
+                **Agency:** {cpcb_meta['source_name']}<br>
+                **Jurisdiction:** {cpcb_meta['jurisdiction']}<br>
+                **Data License:** {cpcb_meta['data_license']}<br>
+                **Monitored Parameters:** {', '.join(cpcb_meta['monitored_parameters'])}<br>
+                **Update Cadence:** {cpcb_meta['update_cadence']}<br><br>
+                <small>{cpcb_meta['instructions']}</small>
+                """,
+                unsafe_allow_html=True,
+            )
+            if st.button("Run Diagnostic Health Check"):
+                diag = cpcb_client.diagnose_feed()
+                st.info(f"Endpoint Check: {diag['status']} | Latency: {diag['latency_ms']} ms | Checked: {diag['checked_at']}")
 
         st.markdown("---")
         st.subheader("Historical ML Model Benchmark Summary")
