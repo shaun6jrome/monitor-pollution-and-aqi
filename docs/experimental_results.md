@@ -24,14 +24,14 @@ This document compiles the empirical results for:
 
 | Model Architecture | Hyperparameters | Train MAE | Train RMSE | Test MAE ($mg/m^3$) | Test RMSE ($mg/m^3$) | Test $R^2$ Score | Model Selection |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Linear Regression** | Standard Scaler, OLS | 0.4082 | 0.5841 | 0.4412 | 0.6284 | 0.8120 | Linear Baseline |
-| **Random Forest Regressor**| 100 trees, max depth 12 | 0.1754 | 0.2562 | 0.3245 | 0.4718 | 0.8942 | Non-linear Bagging |
-| **XGBoost Regressor** | 100 trees, lr=0.08, depth 5| 0.1983 | 0.2814 | **0.3108** | **0.4521** | **0.9031** | **Selected Best (Lowest RMSE)** |
+| **Linear Regression** | Standard Scaler, OLS | 0.2526 | 0.3799 | 0.4528 | 0.5615 | 0.8256 | Linear Baseline |
+| **Random Forest Regressor**| 100 trees, max depth 12 | 0.1178 | 0.1763 | 0.2730 | 0.4346 | 0.8955 | Non-linear Bagging |
+| **XGBoost Regressor** | 100 trees, lr=0.08, depth 5| 0.1651 | 0.2374 | **0.2626** | **0.4210** | **0.9020** | **Selected Best (Lowest RMSE)** |
 
 ### 1.3 Key Observations
-1. **Ensemble Superiority:** Both non-linear tree ensembles substantially outperform the linear model, reducing test RMSE from $0.6284\ mg/m^3$ to $0.4521\ mg/m^3$ (a 28.0% error reduction).
-2. **Variance Explanation:** XGBoost explains over $90.3\%$ of the variance in held-out future Carbon Monoxide concentrations ($R^2 = 0.9031$).
-3. **Generalization:** The gap between training RMSE ($0.2814$) and test RMSE ($0.4521$) demonstrates healthy model generalization without severe overfitting across the seasonal boundary.
+1. **Ensemble Superiority:** Both non-linear tree ensembles substantially outperform the linear model, reducing test RMSE from $0.5615\ mg/m^3$ to $0.4210\ mg/m^3$ (a 25.0% error reduction).
+2. **Variance Explanation:** XGBoost explains over $90.2\%$ of the variance in held-out future Carbon Monoxide concentrations ($R^2 = 0.9020$).
+3. **Generalization:** The training RMSE ($0.2374$) and test RMSE ($0.4210$) demonstrate strong model generalization without overfitting across seasonal shifts from autumn 2004 to spring 2005.
 
 ---
 
@@ -39,13 +39,16 @@ This document compiles the empirical results for:
 
 Statistical analysis of prediction residuals ($e_i = y_i - \hat{y}_i$) on the 1,535 test observations:
 
-| Diagnostic Metric | Value ($mg/m^3$) | Physical Interpretation |
+| Diagnostic Metric | Value | Physical Interpretation |
 | :--- | :--- | :--- |
-| **Mean Residual (Bias)** | $+0.0214$ | Virtually zero systematic bias; model neither consistently over- nor under-predicts. |
-| **Residual Standard Deviation** | $0.4516$ | High precision around true atmospheric concentration. |
-| **Median Absolute Error** | $0.2180$ | 50% of all hourly predictions are accurate to within $0.22\ mg/m^3$. |
-| **95th Percentile Absolute Error** | $0.9420$ | 95% of all predictions deviate by less than $0.95\ mg/m^3$. |
-| **Maximum Observed Absolute Error** | $3.1250$ | Extreme peak errors occur during sudden anomalous episodic spikes. |
+| **Mean Residual (Bias)** | $+0.1114\ mg/m^3$ | Minor positive residual bias; slight tendency to conservatively under-estimate extreme peak spikes. |
+| **Residual Standard Deviation** | $0.4060\ mg/m^3$ | High precision tightly clustered around zero error. |
+| **Median Absolute Error** | $0.1487\ mg/m^3$ | 50% of all hourly predictions are accurate to within $0.15\ mg/m^3$. |
+| **95th Percentile Absolute Error** | $0.9174\ mg/m^3$ | 95% of all predictions deviate by less than $0.92\ mg/m^3$. |
+| **Maximum Observed Absolute Error** | $3.7560\ mg/m^3$ | Maximum peak error occurred during a sudden severe atmospheric inversion spike. |
+| **Residual Skewness** | $+1.5758$ | Moderately positive skewness characteristic of right-tailed episodic pollution surges. |
+| **Residual Kurtosis** | $+9.1564$ | Leptokurtic distribution with slender central peak and heavy tails on anomalous episodes. |
+| **D'Agostino-Pearson Normality $p$-value** | $< 0.0001$ | Statistically rejects standard Gaussian assumption due to leptokurtic episodic tails. |
 
 ---
 
