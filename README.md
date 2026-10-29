@@ -1,5 +1,7 @@
 # Evidence-Aware Pollution Event Discovery and Air-Quality Prediction Using Unstructured Data
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deploy?repository=shaun6jrome/monitor-pollution-and-aqi&branch=main&mainModule=app.py)
+
 A Data Science Ecosystem (DSE) platform integrating real-time unstructured news ingestion, multi-criteria natural language processing (NLP), duplicate-resistant pollution incident discovery, and empirical pollutant concentration forecasting.
 
 ---

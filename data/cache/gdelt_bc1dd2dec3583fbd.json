@@ -1,0 +1,31 @@
+{
+  "query": "construction dust",
+  "cached_at": "2026-10-29T17:20:19.567953+00:00",
+  "cached_at_ts": 1793294419.56821,
+  "articles": [
+    {
+      "url": "https://indianexpress.com/article/cities/delhi/delhi-anti-dust-campaign-mcd-fines-140-construction-sites-along-dwarka-expressway/9618274/",
+      "title": "Anti-dust enforcement: Authorities inspect 140 construction sites along Dwarka expressway",
+      "seendate": "20261027T073000Z",
+      "domain": "indianexpress.com",
+      "language": "English",
+      "sourcecountry": "India"
+    },
+    {
+      "url": "https://mumbaimirror.indiatimes.com/mumbai/civic/bmc-mandates-35-foot-anti-dust-screens-at-all-metro-construction-sites/articleshow/115201948.cms",
+      "title": "Civic body mandates 35-foot anti-dust screens and mist canons across suburban metro construction sites",
+      "seendate": "20261026T110000Z",
+      "domain": "mumbaimirror.indiatimes.com",
+      "language": "English",
+      "sourcecountry": "India"
+    },
+    {
+      "url": "https://www.thehindu.com/news/cities/bangalore/bengaluru-outer-ring-road-roadwork-generates-massive-particulate-dust-plumes/article68791024.ece",
+      "title": "Unpaved roadwork and metro construction dust degrade air quality along Bengaluru Outer Ring Road",
+      "seendate": "20261025T151000Z",
+      "domain": "thehindu.com",
+      "language": "English",
+      "sourcecountry": "India"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "query": "crop burning",
+  "cached_at": "2026-10-29T17:20:19.567953+00:00",
+  "cached_at_ts": 1793294419.56821,
+  "articles": [
+    {
+      "url": "https://indianexpress.com/article/cities/chandigarh/punjab-stubble-burning-farm-fires-sangrur/9623412/",
+      "title": "Punjab farm fire counts surge past 3000 as paddy harvesting season nears conclusion",
+      "seendate": "20261027T140000Z",
+      "domain": "indianexpress.com",
+      "language": "English",
+      "sourcecountry": "India"
+    },
+    {
+      "url": "https://www.thehindu.com/news/national/other-states/haryana-records-decline-in-crop-residue-burning-incidents-satellite-data-shows/article68821940.ece",
+      "title": "Satellite monitoring tracks localized crop residue fires across Karnal and Kaithal districts",
+      "seendate": "20261026T162000Z",
+      "domain": "thehindu.com",
+      "language": "English",
+      "sourcecountry": "India"
+    },
+    {
+      "url": "https://timesofindia.indiatimes.com/city/amritsar/smoke-plumes-from-paddy-burning-settle-over-border-districts-visibility-drops-to-150m/articleshow/115392011.cms",
+      "title": "Smoke plumes from agricultural burning settle over Amritsar and Gurdaspur, dropping morning visibility",
+      "seendate": "20261025T081500Z",
+      "domain": "timesofindia.indiatimes.com",
+      "language": "English",
+      "sourcecountry": "India"
+    }
+  ]
+}

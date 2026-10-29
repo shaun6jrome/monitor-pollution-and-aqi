@@ -55,20 +55,15 @@ htmlcov/
 # Streamlit local state
 .streamlit/secrets.toml
 
-# Local databases and caches
-*.sqlite
-*.sqlite3
-*.db
-data/raw/*
-!data/raw/.gitkeep
+# Local ephemeral database locks
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+
+# Processed intermediate data
 data/processed/*
 !data/processed/.gitkeep
-data/cache/*
-!data/cache/.gitkeep
-
-# Serialized models (keep directory, ignore heavy binary weights)
-models/*
-!models/.gitkeep
 
 # Scratch logs
 *.log

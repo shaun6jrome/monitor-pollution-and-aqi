@@ -1,0 +1,23 @@
+{
+  "query": "waste burning",
+  "cached_at": "2026-10-29T17:20:19.567953+00:00",
+  "cached_at_ts": 1793294419.56821,
+  "articles": [
+    {
+      "url": "https://timesofindia.indiatimes.com/city/delhi/ghazipur-landfill-fire-contained-after-18-hour-firefighting-operation/articleshow/115281092.cms",
+      "title": "Nighttime municipal solid waste burning near landfill site blankets eastern suburbs in acrid smoke",
+      "seendate": "20261027T061000Z",
+      "domain": "timesofindia.indiatimes.com",
+      "language": "English",
+      "sourcecountry": "India"
+    },
+    {
+      "url": "https://indianexpress.com/article/cities/mumbai/deonar-dumping-ground-fires-residents-file-green-tribunal-petition/9601924/",
+      "title": "Residents lodge environmental tribunal complaint over illegal garbage burning and toxic fumes near dumping ground",
+      "seendate": "20261025T135000Z",
+      "domain": "indianexpress.com",
+      "language": "English",
+      "sourcecountry": "India"
+    }
+  ]
+}

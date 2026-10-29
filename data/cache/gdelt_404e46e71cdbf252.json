@@ -1,0 +1,47 @@
+{
+  "query": "industrial emissions",
+  "cached_at": "2026-10-29T17:20:19.567953+00:00",
+  "cached_at_ts": 1793294419.56821,
+  "articles": [
+    {
+      "url": "https://www.thehindu.com/news/national/tamil-nadu/tirupur-effluent-discharge-noyyal/article68712345.ece",
+      "title": "Industrial emissions from textile dye units pollute Noyyal river basin near Tirupur and Coimbatore",
+      "seendate": "20261027T083000Z",
+      "domain": "thehindu.com",
+      "language": "English",
+      "sourcecountry": "India"
+    },
+    {
+      "url": "https://timesofindia.indiatimes.com/city/ahmedabad/gujarat-pollution-control-board-issues-closure-notice-to-chemical-units-in-ankleshwar/articleshow/114872190.cms",
+      "title": "Pollution control board issues closure notices to chemical manufacturing units in Ankleshwar and Vapi",
+      "seendate": "20261026T142000Z",
+      "domain": "timesofindia.indiatimes.com",
+      "language": "English",
+      "sourcecountry": "India"
+    },
+    {
+      "url": "https://www.reuters.com/business/environment/eu-regulators-tighten-industrial-emissions-directive-chemical-manufacturing-2026-10-25/",
+      "title": "European Union tightens industrial emissions directive for major chemical refineries",
+      "seendate": "20261025T111500Z",
+      "domain": "reuters.com",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://indianexpress.com/article/cities/delhi/bhiwadi-industrial-cluster-air-quality-emergency-haryana-rajasthan-border/9583210/",
+      "title": "Bhiwadi industrial corridor records severe air index as boiler soot blankets residential sectors",
+      "seendate": "20261025T094000Z",
+      "domain": "indianexpress.com",
+      "language": "English",
+      "sourcecountry": "India"
+    },
+    {
+      "url": "https://www.sciencedaily.com/releases/2026/10/261024091218.htm",
+      "title": "New optical sensor network detects volatile organic compounds and nitrogen dioxide plumes from industrial zones",
+      "seendate": "20261024T160000Z",
+      "domain": "sciencedaily.com",
+      "language": "English",
+      "sourcecountry": "United States"
+    }
+  ]
+}

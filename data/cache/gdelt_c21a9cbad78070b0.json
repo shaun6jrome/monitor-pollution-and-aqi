@@ -1,0 +1,23 @@
+{
+  "query": "vehicle emissions",
+  "cached_at": "2026-10-29T17:20:19.567953+00:00",
+  "cached_at_ts": 1793294419.56821,
+  "articles": [
+    {
+      "url": "https://timesofindia.indiatimes.com/city/delhi/transport-department-impounds-overaged-diesel-vehicles-during-pollution-drive/articleshow/115401928.cms",
+      "title": "Transport department impounds 280 overaged diesel commercial vehicles during anti-pollution drive",
+      "seendate": "20261027T124000Z",
+      "domain": "timesofindia.indiatimes.com",
+      "language": "English",
+      "sourcecountry": "India"
+    },
+    {
+      "url": "https://www.thehindu.com/news/cities/chennai/chennai-traffic-gridlock-at-kathipara-junction-spikes-nitrogen-dioxide-levels/article68809214.ece",
+      "title": "Traffic congestion at arterial junctions causes evening spike in nitrogen oxide vehicular emissions",
+      "seendate": "20261026T173000Z",
+      "domain": "thehindu.com",
+      "language": "English",
+      "sourcecountry": "India"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "query": "particulate pollution",
+  "cached_at": "2026-10-29T17:20:19.567953+00:00",
+  "cached_at_ts": 1793294419.56821,
+  "articles": [
+    {
+      "url": "https://www.thehindu.com/news/cities/delhi/delhi-air-pollution-severe-aqi/article68854321.ece",
+      "title": "Severe smog envelops Delhi NCR as PM2.5 and PM10 particulate levels surge past emergency thresholds",
+      "seendate": "20261027T053000Z",
+      "domain": "thehindu.com",
+      "language": "English",
+      "sourcecountry": "India"
+    },
+    {
+      "url": "https://www.reuters.com/business/environment/who-releases-updated-guidelines-fine-particulate-matter-health-risks-2026-10-24/",
+      "title": "Global health agencies warn of long-term cardiovascular risks from ultrafine particulate matter exposure",
+      "seendate": "20261026T090000Z",
+      "domain": "reuters.com",
+      "language": "English",
+      "sourcecountry": "United States"
+    }
+  ]
+}
