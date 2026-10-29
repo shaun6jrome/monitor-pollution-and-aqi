@@ -751,7 +751,7 @@ def page_forecasting():
 
     model_choice = st.selectbox(
         "Select Evaluated Model",
-        ["RandomForestRegressor", "XGBoostRegressor", "LinearRegression"],
+        ["XGBoostRegressor", "RandomForestRegressor", "LinearRegression"],
         index=0,
     )
 

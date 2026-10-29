@@ -28,9 +28,14 @@ class SemanticEmbeddingManager:
         self._initialize_encoder()
 
     def _initialize_encoder(self) -> None:
-        """Attempt to load SentenceTransformer model; fallback to TF-IDF on failure."""
+        """Attempt to load SentenceTransformer model; fallback to TF-IDF on failure or lightweight cloud mode."""
+        import os
+
+        if os.getenv("USE_LIGHTWEIGHT_EMBEDDINGS", "").lower() in ("true", "1", "yes"):
+            self._init_tfidf("tfidf_fallback (memory-optimized cloud mode)")
+            return
+
         try:
-            import os
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
             from sentence_transformers import SentenceTransformer
 
@@ -39,14 +44,19 @@ class SemanticEmbeddingManager:
             self.active_method = f"sentence_transformers ({self.model_name})"
             logger.info("SentenceTransformer successfully loaded.")
             return
+        except (ImportError, ModuleNotFoundError):
+            logger.info("SentenceTransformer not installed. Initializing lightweight TF-IDF embedding fallback.")
+            self._init_tfidf("tfidf_fallback")
         except Exception as e:
             logger.warning(
                 "Could not load SentenceTransformer ('%s'): %s. Initializing TF-IDF fallback.",
                 self.model_name,
                 e,
             )
+            self._init_tfidf("tfidf_fallback")
 
-        # TF-IDF Fallback
+    def _init_tfidf(self, method_name: str = "tfidf_fallback") -> None:
+        """Initialize TF-IDF vectorizer fallback."""
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -55,8 +65,8 @@ class SemanticEmbeddingManager:
                 ngram_range=(1, 2),
                 stop_words="english",
             )
-            self.active_method = "tfidf_fallback"
-            logger.info("TF-IDF vectorizer fallback initialized.")
+            self.active_method = method_name
+            logger.info("TF-IDF vectorizer fallback initialized (%s).", method_name)
         except Exception as e2:
             self.active_method = "lexical_jaccard_fallback"
             logger.warning("scikit-learn not available. Using lexical Jaccard fallback: %s", e2)
