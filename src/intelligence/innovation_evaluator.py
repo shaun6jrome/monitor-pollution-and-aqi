@@ -269,3 +269,35 @@ def evaluate_innovation_pipeline(
             "to prevent merging Mumbai and Delhi reports, and temporal windows (72h) to avoid merging Nov 1 and Nov 25 Delhi smog episodes."
         ),
     }
+
+
+def export_benchmark_csv(benchmark_results: Dict[str, Any], output_path: Optional[Any] = None) -> Any:
+    """Export benchmark comparison results to a structured CSV file."""
+    import pandas as pd
+    from pathlib import Path
+    import config
+
+    rows = benchmark_results.get("comparison_table", [])
+    df = pd.DataFrame(rows)
+
+    out_file = Path(output_path or (config.DATA_DIR / "processed" / "innovation_benchmark.csv"))
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_file, index=False)
+    logger.info("Exported innovation benchmark CSV to %s", out_file)
+    return out_file
+
+
+def export_benchmark_markdown(benchmark_results: Dict[str, Any]) -> str:
+    """Generate a GitHub-flavored Markdown table of the innovation benchmark."""
+    rows = benchmark_results.get("comparison_table", [])
+    lines = [
+        "| Evaluation Method | Discovered Events | True Events | Pairwise Precision | Pairwise Recall | Pairwise F1 | Primary Defect |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for r in rows:
+        lines.append(
+            f"| {r['Method']} | {r['Discovered Events']} | {r['True Events']} | "
+            f"{r['Pairwise Precision']:.4f} | {r['Pairwise Recall']:.4f} | {r['Pairwise F1']:.4f} | "
+            f"{r['Primary Defect']} |"
+        )
+    return "\n".join(lines)
