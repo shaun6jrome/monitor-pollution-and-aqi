@@ -180,7 +180,7 @@ class PollutionClassifier:
     def explain_prediction(self, title: str, content: Optional[str] = None) -> Dict[str, Any]:
         """Provide detailed feature-level attribution and evidence for classification."""
         base_result = self.classify_text(title=title, content=content)
-        combined = normalize_text(f"{title} {content or ''}")
+        combined = f"{title or ''} {content or ''}".strip().lower()
 
         matched_strong = [w for w in POLLUTION_KEYWORDS["strong"] if w in combined]
         matched_moderate = [w for w in POLLUTION_KEYWORDS["moderate"] if w in combined]
