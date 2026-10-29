@@ -26,12 +26,33 @@ def compute_residual_diagnostics(actuals: np.ndarray, predictions: np.ndarray) -
     p95_err = float(np.percentile(abs_errors, 95))
     max_err = float(np.max(abs_errors))
 
+    # Higher-order statistical moments and normality diagnostics
+    skewness = 0.0
+    kurt = 0.0
+    normaltest_stat = None
+    normaltest_pvalue = None
+
+    try:
+        from scipy import stats
+        skewness = float(stats.skew(residuals))
+        kurt = float(stats.kurtosis(residuals))
+        if len(residuals) >= 20:
+            stat_res = stats.normaltest(residuals)
+            normaltest_stat = round(float(stat_res.statistic), 4)
+            normaltest_pvalue = round(float(stat_res.pvalue), 6)
+    except Exception as e:
+        logger.warning("Could not compute scipy residual statistics: %s", e)
+
     return {
         "mean_residual": round(mean_res, 4),
         "std_residual": round(std_res, 4),
         "median_absolute_error": round(median_abs_err, 4),
         "p95_absolute_error": round(p95_err, 4),
         "max_error": round(max_err, 4),
+        "skewness": round(skewness, 4),
+        "kurtosis": round(kurt, 4),
+        "normaltest_statistic": normaltest_stat,
+        "normaltest_pvalue": normaltest_pvalue,
     }
 
 
