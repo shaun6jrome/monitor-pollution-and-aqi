@@ -354,11 +354,26 @@ def page_news_intelligence(repo: PollutionRepository):
                     force_refresh=force_refresh,
                 )
                 if res["status"] in ("LIVE_SUCCESS", "CACHED", "SUCCESS"):
-                    st.success(
-                        f"Retrieved {res['total_retrieved']} articles ({res['new_records']} new, {res['duplicate_records']} existing) from {res['source']}."
-                    )
+                    if "policy fallback" in str(res.get("source", "")).lower():
+                        st.info(
+                            f"Retrieved {res['total_retrieved']} articles ({res['new_records']} new, {res['duplicate_records']} existing) from {res['source']}.\n\n"
+                            "Notice: Direct outbound network access to api.gdeltproject.org was restricted by the environment's security proxy policy (HTTP 403). "
+                            "The platform automatically served verified cached environmental news records."
+                        )
+                    else:
+                        st.success(
+                            f"Retrieved {res['total_retrieved']} articles ({res['new_records']} new, {res['duplicate_records']} existing) from {res['source']}."
+                        )
                 else:
-                    st.error(f"Retrieval status: {res['status']}. Error: {res.get('error')}")
+                    err_text = str(res.get("error", ""))
+                    if "policy" in err_text.lower() or "403" in err_text:
+                        st.warning(
+                            f"Network Policy Notice: Outbound requests to api.gdeltproject.org were restricted by the environment network policy ({err_text}).\n\n"
+                            "The platform continues operating using stored database articles and cached records. "
+                            "When running locally on a standard internet connection without restrictive proxy rules, live GDELT streams can be fetched directly."
+                        )
+                    else:
+                        st.error(f"Retrieval status: {res['status']}. Error: {res.get('error')}")
 
     st.markdown("---")
 

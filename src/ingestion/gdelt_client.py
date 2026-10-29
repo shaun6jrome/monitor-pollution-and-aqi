@@ -60,10 +60,37 @@ class GDELTClient:
         self.cache_ttl = cache_ttl
         self.extractor = ArticleExtractor(timeout=8)
 
+    def _find_cache_file(self, query: str, max_records: int) -> Optional[Path]:
+        """Find best matching cache file for a query across deterministic hash variants."""
+        norm_q = query.lower().strip()
+        candidates = [
+            self.cache_dir / f"gdelt_{hashlib.sha256(f'{query}_{max_records}'.encode('utf-8')).hexdigest()[:16]}.json",
+            self.cache_dir / f"gdelt_{hashlib.sha256(f'{norm_q}_{max_records}'.encode('utf-8')).hexdigest()[:16]}.json",
+            self.cache_dir / f"gdelt_{hashlib.sha256(norm_q.encode('utf-8')).hexdigest()[:16]}.json",
+        ]
+        for p in candidates:
+            if p.exists():
+                return p
+
+        # Check existing json files in cache_dir matching query
+        if self.cache_dir.exists():
+            for p in self.cache_dir.glob("gdelt_*.json"):
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    if data.get("query", "").lower().strip() == norm_q:
+                        return p
+                except Exception:
+                    continue
+        return None
+
     def _get_cache_path(self, query: str, max_records: int) -> Path:
         """Generate safe deterministic cache file path for a query."""
-        key = f"{query}_{max_records}"
-        digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
+        found = self._find_cache_file(query, max_records)
+        if found:
+            return found
+        norm_q = query.lower().strip()
+        digest = hashlib.sha256(f"{norm_q}_{max_records}".encode("utf-8")).hexdigest()[:16]
         return self.cache_dir / f"gdelt_{digest}.json"
 
     def fetch_articles(
@@ -79,24 +106,27 @@ class GDELTClient:
         """
         cache_path = self._get_cache_path(query, max_records)
         now_ts = datetime.now(timezone.utc).timestamp()
+        fallback_cached_data = None
 
         # Check local cache first unless force_refresh is requested
-        if not force_refresh and cache_path.exists():
+        if cache_path.exists():
             try:
                 with open(cache_path, "r", encoding="utf-8") as f:
                     cached_data = json.load(f)
                 cached_time = cached_data.get("cached_at_ts", 0)
-                if now_ts - cached_time < self.cache_ttl:
-                    articles = cached_data.get("articles", [])
+                articles = cached_data.get("articles", [])
+                if not force_refresh and (now_ts - cached_time < self.cache_ttl):
                     meta = {
                         "status": "CACHED",
                         "source": "local_cache",
                         "cache_file": str(cache_path),
                         "cached_at": cached_data.get("cached_at"),
-                        "total_retrieved": len(articles),
+                        "total_retrieved": len(articles[:max_records]),
                         "query": query,
                     }
-                    return articles, meta
+                    return articles[:max_records], meta
+                else:
+                    fallback_cached_data = (articles[:max_records], cached_data.get("cached_at"))
             except Exception as e:
                 logger.warning("Error reading GDELT cache %s: %s", cache_path, e)
 
@@ -132,8 +162,25 @@ class GDELTClient:
                     continue
 
                 if response.status_code != 200:
-                    error_msg = f"GDELT API returned HTTP {response.status_code}: {response.text[:120]}"
-                    logger.error(error_msg)
+                    is_policy_block = "not allowed by policy" in response.text.lower() or response.status_code == 403
+                    if is_policy_block:
+                        error_msg = f"GDELT API request restricted by network proxy policy (HTTP {response.status_code})"
+                    else:
+                        error_msg = f"GDELT API returned HTTP {response.status_code}: {response.text[:120]}"
+
+                    logger.warning("%s. Checking offline cached fallback...", error_msg)
+                    if fallback_cached_data and fallback_cached_data[0]:
+                        fb_articles, fb_cached_at = fallback_cached_data
+                        self.repository.log_retrieval("GDELT", query, "CACHED_FALLBACK", records_retrieved=len(fb_articles), error_message=error_msg)
+                        return fb_articles, {
+                            "status": "CACHED",
+                            "source": "local_cache (offline policy fallback)",
+                            "cached_at": fb_cached_at,
+                            "total_retrieved": len(fb_articles),
+                            "query": query,
+                            "warning": error_msg,
+                        }
+
                     self.repository.log_retrieval("GDELT", query, "FAILED", error_message=error_msg)
                     return [], {
                         "status": "FAILED",
@@ -167,6 +214,16 @@ class GDELTClient:
                     time.sleep(3)
                     continue
                 logger.warning(err)
+                if fallback_cached_data and fallback_cached_data[0]:
+                    fb_articles, fb_cached_at = fallback_cached_data
+                    return fb_articles, {
+                        "status": "CACHED",
+                        "source": "local_cache (offline timeout fallback)",
+                        "cached_at": fb_cached_at,
+                        "total_retrieved": len(fb_articles),
+                        "query": query,
+                        "warning": err,
+                    }
                 self.repository.log_retrieval("GDELT", query, "TIMEOUT", error_message=err)
                 return [], {"status": "TIMEOUT", "error": err, "total_retrieved": 0, "query": query}
             except requests.RequestException as e:
@@ -176,6 +233,16 @@ class GDELTClient:
                     time.sleep(3)
                     continue
                 logger.warning(err)
+                if fallback_cached_data and fallback_cached_data[0]:
+                    fb_articles, fb_cached_at = fallback_cached_data
+                    return fb_articles, {
+                        "status": "CACHED",
+                        "source": "local_cache (offline network fallback)",
+                        "cached_at": fb_cached_at,
+                        "total_retrieved": len(fb_articles),
+                        "query": query,
+                        "warning": str(e),
+                    }
                 self.repository.log_retrieval("GDELT", query, "NETWORK_ERROR", error_message=str(e))
                 return [], {"status": "NETWORK_ERROR", "error": str(e), "total_retrieved": 0, "query": query}
             except Exception as e:
