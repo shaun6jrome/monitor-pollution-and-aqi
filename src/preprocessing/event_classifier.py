@@ -92,7 +92,7 @@ class PollutionClassifier:
             )
             x_vec = self.vectorizer.fit_transform(texts)
 
-            self.classifier = LogisticRegression(C=1.0, random_state=42)
+            self.classifier = LogisticRegression(C=5.0, random_state=42)
             self.classifier.fit(x_vec, labels)
             self.is_trained = True
             logger.info("PollutionClassifier TF-IDF baseline trained on %d samples.", len(texts))
@@ -121,14 +121,19 @@ class PollutionClassifier:
                 probs = self.classifier.predict_proba(x)[0]
                 prob_positive = float(probs[1])
 
-                if prob_positive >= 0.65:
+                # Check keyword reinforcement
+                strong_matches = [w for w in POLLUTION_KEYWORDS["strong"] if w in combined]
+                if strong_matches and prob_positive < 0.60:
+                    prob_positive = min(0.95, prob_positive + 0.20)
+
+                if prob_positive >= 0.55:
                     return {
                         "label": 1,
                         "confidence": round(prob_positive, 4),
                         "method": "tfidf_logistic_regression",
                         "explanation": f"Supervised model predicted pollution-related (P={prob_positive:.2f}).",
                     }
-                elif prob_positive <= 0.35:
+                elif prob_positive <= 0.45:
                     return {
                         "label": 0,
                         "confidence": round(1.0 - prob_positive, 4),
@@ -140,7 +145,7 @@ class PollutionClassifier:
                         "label": -1,
                         "confidence": round(abs(prob_positive - 0.5) * 2, 4),
                         "method": "tfidf_logistic_regression",
-                        "explanation": f"Uncertain prediction: probability {prob_positive:.2f} falls in ambiguity window [0.35, 0.65].",
+                        "explanation": f"Uncertain prediction: probability {prob_positive:.2f} falls in ambiguity window [0.45, 0.55].",
                     }
             except Exception as e:
                 logger.warning("TF-IDF classification error: %s. Using heuristic fallback.", e)

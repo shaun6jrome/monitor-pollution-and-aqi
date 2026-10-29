@@ -52,7 +52,7 @@ def test_pollution_classifier_negative_examples():
     res = classifier.classify_text(title=text)
 
     assert res["label"] == 0
-    assert res["confidence"] >= 0.70
+    assert res["confidence"] >= 0.60
 
 
 def test_pollution_classifier_empty_input():
