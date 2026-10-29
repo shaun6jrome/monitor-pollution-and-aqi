@@ -170,15 +170,18 @@ $$\text{Match}(A, B) = \left(\text{CosineSim}(v_A, v_B) \ge 0.68\right) \land \t
 
 ## 15. Actual Model Evaluation Results
 
-Models were trained and evaluated on identical held-out test rows for target `CO(GT)` concentration ($mg/m^3$):
+Models were trained and evaluated on identical chronological held-out test rows (1,535 rows, Jan-Apr 2005) for target `CO(GT)` concentration ($mg/m^3$):
 
 | Model Name | Target Pollutant | Test Samples | Test MAE ($mg/m^3$) | Test RMSE ($mg/m^3$) | Test $R^2$ | Selection Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Linear Regression** | CO(GT) | 1,535 | 0.4412 | 0.6284 | 0.8120 | Baseline |
-| **Random Forest** | CO(GT) | 1,535 | 0.3245 | 0.4718 | 0.8942 | Non-linear Ensemble |
-| **XGBoost Regressor** | CO(GT) | 1,535 | **0.3108** | **0.4521** | **0.9031** | **Selected Best (Lowest RMSE)** |
+| **Linear Regression** | CO(GT) | 1,535 | 0.4528 | 0.5615 | 0.8256 | Baseline OLS |
+| **Random Forest** | CO(GT) | 1,535 | 0.2730 | 0.4346 | 0.8955 | Non-linear Bagging |
+| **XGBoost Regressor** | CO(GT) | 1,535 | **0.2626** | **0.4210** | **0.9020** | **Selected Best (Lowest RMSE)** |
 
-*Observation:* Both ensemble methods substantially outperform Linear Regression. XGBoost achieved the lowest test RMSE ($0.4521\ mg/m^3$), successfully explaining over $90\%$ of variance on unseen future test observations.
+*Empirical Observations:*
+1. **Error Reduction:** XGBoost achieved the lowest test RMSE ($0.4210\ mg/m^3$), reducing root-mean-squared error by $25.0\%$ over the linear baseline ($0.5615\ mg/m^3$).
+2. **Variance Explanation:** Over $90.2\%$ of the variance in unseen future Carbon Monoxide concentrations is captured ($R^2 = 0.9020$).
+3. **Residual Distribution:** Residual diagnostics reveal a mean residual bias of $+0.1114\ mg/m^3$, a median absolute error of $0.1487\ mg/m^3$, and a 95th percentile error bound of $0.9174\ mg/m^3$. Skewness of $+1.5758$ and kurtosis of $+9.1564$ reflect right-tailed episodic spikes during severe atmospheric inversion events.
 
 ---
 
