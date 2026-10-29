@@ -68,6 +68,7 @@ def train_single_model(
     x_test: np.ndarray,
     y_test: np.ndarray,
     use_scaler: bool = False,
+    feature_names: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Train a single model, compute metrics on identical test set, and return evaluation pack."""
     if use_scaler:
@@ -92,6 +93,17 @@ def train_single_model(
     # Compute residuals
     residuals = y_test - test_preds
 
+    # Extract feature importance if feature names provided
+    feature_importances: Dict[str, float] = {}
+    if feature_names:
+        reg = pipe.named_steps["regressor"] if use_scaler else pipe
+        if hasattr(reg, "feature_importances_"):
+            for f_name, imp in zip(feature_names, reg.feature_importances_):
+                feature_importances[f_name] = round(float(imp), 4)
+        elif hasattr(reg, "coef_"):
+            for f_name, c in zip(feature_names, reg.coef_):
+                feature_importances[f_name] = round(float(c), 4)
+
     return {
         "model_name": model_name,
         "pipeline": pipe,
@@ -103,6 +115,7 @@ def train_single_model(
         "test_predictions": test_preds,
         "test_actuals": y_test,
         "residuals": residuals,
+        "feature_importances": feature_importances,
     }
 
 
@@ -150,7 +163,7 @@ def train_and_evaluate_all_models(
     config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
     for name, est, scale in models_to_train:
-        res = train_single_model(name, est, x_train, y_train, x_test, y_test, use_scaler=scale)
+        res = train_single_model(name, est, x_train, y_train, x_test, y_test, use_scaler=scale, feature_names=feature_names)
         results.append(res)
         if res["test_rmse"] < best_rmse:
             best_rmse = res["test_rmse"]
@@ -174,6 +187,7 @@ def train_and_evaluate_all_models(
                     "test_mae": res["test_mae"],
                     "test_rmse": res["test_rmse"],
                     "test_r2": res["test_r2"],
+                    "feature_importances": res["feature_importances"],
                 },
                 model_path,
             )
@@ -206,6 +220,7 @@ def train_and_evaluate_all_models(
                 "train_mae": res["train_mae"],
                 "train_rmse": res["train_rmse"],
                 "is_best": bool(is_best),
+                "feature_importances": res["feature_importances"],
             }
         )
 
