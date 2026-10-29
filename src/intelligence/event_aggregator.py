@@ -206,3 +206,80 @@ class EventAggregator:
             "active_embedding_method": self.embedding_manager.active_method,
             "distinct_event_count": self.repository.count_events(),
         }
+
+    def diagnose_cluster_quality(self, event_id: str) -> Dict[str, Any]:
+        """Compute intra-cluster pairwise similarity and cohesion metrics."""
+        ev = self.repository.get_event_with_articles(event_id)
+        if not ev or "articles" not in ev or not ev["articles"]:
+            return {
+                "event_id": event_id,
+                "status": "NOT_FOUND",
+                "article_count": 0,
+                "cohesion_score": 0.0,
+                "is_tight": False,
+            }
+
+        articles = ev["articles"]
+        n = len(articles)
+        if n == 1:
+            return {
+                "event_id": event_id,
+                "status": "SINGLETON",
+                "article_count": 1,
+                "cohesion_score": 1.0,
+                "distinct_domains": 1,
+                "is_tight": True,
+                "diagnosis": "Single source report; perfectly cohesive singleton.",
+            }
+
+        sim_sum = 0.0
+        pair_count = 0
+        min_sim = 1.0
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                c1 = (articles[i].get("content_normalized") or "")[:300]
+                c2 = (articles[j].get("content_normalized") or "")[:300]
+                t1 = f"{articles[i].get('title', '')} {c1}"
+                t2 = f"{articles[j].get('title', '')} {c2}"
+                s = self.embedding_manager.compute_similarity(t1, t2)
+                sim_sum += s
+                pair_count += 1
+                if s < min_sim:
+                    min_sim = s
+
+        avg_cohesion = sim_sum / pair_count if pair_count > 0 else 1.0
+        is_tight = avg_cohesion >= config.SIMILARITY_THRESHOLD and min_sim >= (config.SIMILARITY_THRESHOLD - 0.15)
+
+        return {
+            "event_id": event_id,
+            "status": "MULTI_ARTICLE",
+            "article_count": n,
+            "distinct_domains": len(set(a.get("source_domain", "") for a in articles)),
+            "average_cohesion": round(avg_cohesion, 4),
+            "minimum_similarity": round(min_sim, 4),
+            "is_tight": is_tight,
+            "diagnosis": "Tightly bound corroborated cluster." if is_tight else "Loosely bound cluster with potential outlier.",
+        }
+
+    def get_clustering_summary(self) -> Dict[str, Any]:
+        """Return overall system-wide clustering statistics across all discovered events."""
+        events = self.repository.list_events(limit=500)
+        total_events = len(events)
+        if total_events == 0:
+            return {"total_events": 0, "singletons": 0, "multi_article_clusters": 0, "max_cluster_size": 0}
+
+        counts = [e.get("report_count", 1) for e in events]
+        singletons = sum(1 for c in counts if c == 1)
+        multi = sum(1 for c in counts if c > 1)
+        max_size = max(counts) if counts else 0
+        avg_size = round(sum(counts) / total_events, 2) if total_events > 0 else 0.0
+
+        return {
+            "total_events": total_events,
+            "singletons": singletons,
+            "multi_article_clusters": multi,
+            "singleton_ratio": round(singletons / total_events, 3) if total_events > 0 else 0.0,
+            "max_cluster_size": max_size,
+            "average_cluster_size": avg_size,
+        }
