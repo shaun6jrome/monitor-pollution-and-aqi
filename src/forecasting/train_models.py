@@ -12,8 +12,13 @@ Metrics (MAE, RMSE, R^2) and artifact paths are persisted to SQLite.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+# Prevent OpenMP thread collision on macOS
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import joblib
 import numpy as np
@@ -42,10 +47,10 @@ def get_xgboost_regressor() -> Any:
             subsample=0.85,
             colsample_bytree=0.85,
             random_state=config.RANDOM_STATE,
-            n_jobs=-1,
+            n_jobs=1,
         )
-    except ImportError:
-        logger.warning("XGBoost package not available. Using GradientBoostingRegressor fallback.")
+    except Exception as e:
+        logger.warning("XGBoost could not be loaded (%s). Using GradientBoostingRegressor fallback.", e)
         from sklearn.ensemble import GradientBoostingRegressor
         return GradientBoostingRegressor(
             n_estimators=100,
@@ -131,7 +136,7 @@ def train_and_evaluate_all_models(
                 max_depth=12,
                 min_samples_split=4,
                 random_state=config.RANDOM_STATE,
-                n_jobs=-1,
+                n_jobs=1,
             ),
             False,
         ),

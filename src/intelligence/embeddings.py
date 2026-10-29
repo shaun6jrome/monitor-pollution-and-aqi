@@ -30,10 +30,12 @@ class SemanticEmbeddingManager:
     def _initialize_encoder(self) -> None:
         """Attempt to load SentenceTransformer model; fallback to TF-IDF on failure."""
         try:
+            import os
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
             from sentence_transformers import SentenceTransformer
 
-            logger.info("Loading SentenceTransformer model '%s'...", self.model_name)
-            self.model = SentenceTransformer(self.model_name)
+            logger.info("Loading SentenceTransformer model '%s' on CPU...", self.model_name)
+            self.model = SentenceTransformer(self.model_name, device="cpu")
             self.active_method = f"sentence_transformers ({self.model_name})"
             logger.info("SentenceTransformer successfully loaded.")
             return
