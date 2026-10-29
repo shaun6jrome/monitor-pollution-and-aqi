@@ -47,7 +47,11 @@ def run_pipeline(force_refresh_news: bool = False) -> None:
     total_retrieved = 0
 
     queries = ["air pollution", "industrial emissions", "crop burning"]
-    for q in queries:
+    import time
+    for idx, q in enumerate(queries):
+        if idx > 0 and force_refresh_news:
+            logger.info("Enforcing 6-second rate limit pause before GDELT query '%s'...", q)
+            time.sleep(6)
         res = gdelt.ingest_query_results(q, max_records=25, force_refresh=force_refresh_news)
         total_retrieved += res["total_retrieved"]
         total_new += res["new_records"]
