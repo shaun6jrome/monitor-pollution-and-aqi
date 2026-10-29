@@ -204,8 +204,10 @@ def compile_report_pdf() -> bool:
         try:
             cmd = [
                 CHROME_PATH,
-                "--headless",
+                "--headless=new",
                 "--disable-gpu",
+                "--no-sandbox",
+                f"--user-data-dir=/tmp/chrome_pdf_{os.getpid()}",
                 f"--print-to-pdf={pdf_file}",
                 "--no-pdf-header-footer",
                 str(html_file),
