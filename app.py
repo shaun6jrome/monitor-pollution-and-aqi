@@ -30,6 +30,7 @@ from src.forecasting.evaluate_models import compute_residual_diagnostics, format
 from src.forecasting.predict import ModelPredictor
 from src.forecasting.train_models import train_and_evaluate_all_models
 from src.ingestion.cpcb_client import CPCBClient
+from src.ingestion.cpcb_stations import get_station_coordinates
 from src.ingestion.gdelt_client import GDELTClient
 from src.intelligence.embeddings import SemanticEmbeddingManager
 from src.intelligence.event_aggregator import EventAggregator
@@ -472,51 +473,135 @@ def page_event_explorer(repo: PollutionRepository):
 # Page D: Geographic View
 # -------------------------------------------------------------
 def page_geographic_view(repo: PollutionRepository):
-    st.header("Geographic Event Distribution")
-    st.caption("Spatial visualization of verified coordinates or transparent tabular breakdown where physical coordinates are unavailable.")
+    st.header("Geographic Event & Monitoring Distribution")
+    st.caption("Spatial visualization mapping verified CAAQMS monitoring stations and geocoded regional pollution event clusters.")
 
     events = repo.list_events(limit=100)
-    if not events:
-        st.info("No events currently discovered.")
+    cpcb_obs = repo.get_latest_cpcb_observations(limit=50)
+
+    if not events and not cpcb_obs:
+        st.info("No discovered events or station observations available for mapping.")
         return
 
-    # Check for valid numerical coordinates
-    events_with_coords = [e for e in events if e.get("latitude") is not None and e.get("longitude") is not None]
+    # Build geospatial point list
+    map_points = []
 
-    if events_with_coords:
-        st.subheader("Geocoded Event Map")
-        df_map = pd.DataFrame(events_with_coords)
-        st.map(df_map[["latitude", "longitude"]])
+    # 1. Geocode discovered events using regional gazetteer
+    for ev in events:
+        loc = ev.get("reported_location")
+        lat = ev.get("latitude")
+        lon = ev.get("longitude")
+
+        if lat is None or lon is None:
+            if loc:
+                lat, lon = get_station_coordinates("", city_name=loc)
+
+        if lat is not None and lon is not None:
+            map_points.append(
+                {
+                    "lat": float(lat),
+                    "lon": float(lon),
+                    "label": ev["title"][:60],
+                    "entity_type": "Discovered Event Cluster",
+                    "location": loc or "Unspecified",
+                    "category": ev.get("category", "General"),
+                    "reports": ev.get("report_count", 1),
+                }
+            )
+
+    # 2. Add CPCB official monitoring stations
+    for obs in cpcb_obs:
+        st_name = obs.get("station_name", "")
+        city = obs.get("city", "")
+        lat, lon = get_station_coordinates(st_name, city_name=city)
+
+        if lat is not None and lon is not None:
+            map_points.append(
+                {
+                    "lat": float(lat),
+                    "lon": float(lon),
+                    "label": f"{st_name} ({obs.get('pollutant')}: {obs.get('value')} {obs.get('unit')})",
+                    "entity_type": "Official CAAQMS Station",
+                    "location": f"{city}, {obs.get('state', '')}",
+                    "category": obs.get("pollutant", "PM2.5"),
+                    "reports": 1,
+                }
+            )
+
+    # Display Map
+    if map_points:
+        df_geo = pd.DataFrame(map_points)
+        st.subheader(f"Geographic Spatial Map ({len(df_geo)} verified markers)")
+
+        col_map1, col_map2 = st.columns([3, 1])
+        with col_map2:
+            type_filter = st.multiselect(
+                "Filter Marker Layer",
+                ["Discovered Event Cluster", "Official CAAQMS Station"],
+                default=["Discovered Event Cluster", "Official CAAQMS Station"],
+            )
+
+        filtered_geo = df_geo[df_geo["entity_type"].isin(type_filter)] if type_filter else df_geo
+
+        if not filtered_geo.empty:
+            try:
+                fig = px.scatter_map(
+                    filtered_geo,
+                    lat="lat",
+                    lon="lon",
+                    color="entity_type",
+                    hover_name="label",
+                    hover_data={"location": True, "category": True, "lat": False, "lon": False},
+                    color_discrete_map={
+                        "Discovered Event Cluster": "#ef4444",
+                        "Official CAAQMS Station": "#059669",
+                    },
+                    zoom=4,
+                    center={"lat": 22.0, "lon": 79.0},
+                    height=520,
+                )
+                fig.update_layout(
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception:
+                # Fallback to Streamlit native map if MapLibre fails
+                st.map(filtered_geo[["lat", "lon"]], zoom=4)
+        else:
+            st.info("No markers match current filter.")
     else:
         st.markdown(
             """
             <div class="disclaimer-box">
-            <strong>Coordinate Availability Notice:</strong> News articles provide textual city/region names (e.g. "Delhi", "Punjab", "Mumbai")
-            rather than physical sensor GPS coordinates. In compliance with data integrity requirements, events are NOT pinned to fabricated
-            or pseudo-random coordinates. Below is the verifiable geographic frequency table derived from textual entity extraction.
+            <strong>Coordinate Availability Notice:</strong> Ingested news articles provide regional city strings rather than physical sensor coordinates.
+            Events without matched city coordinates are excluded from spatial plotting to maintain scientific integrity.
             </div>
             """,
             unsafe_allow_html=True,
         )
 
+    st.markdown("---")
+    # Tabular Breakdown
+    col1, col2 = st.columns([3, 2])
+    with col1:
+        st.subheader("Discovered Events by Geographic Region")
         df_ev = pd.DataFrame(events)
-        loc_counts = df_ev["reported_location"].fillna("Regional / National / Unspecified").value_counts().reset_index()
-        loc_counts.columns = ["Reported Location", "Discovered Events"]
-
-        col1, col2 = st.columns([3, 2])
-        with col1:
-            st.subheader("Event Frequency by Location")
+        if not df_ev.empty:
+            loc_counts = df_ev["reported_location"].fillna("Regional / National / Unspecified").value_counts().reset_index()
+            loc_counts.columns = ["Reported Location", "Discovered Events"]
             st.dataframe(loc_counts, use_container_width=True)
-        with col2:
-            st.subheader("Location Breakdown Chart")
-            fig = px.pie(
+    with col2:
+        st.subheader("Regional Event Proportions")
+        if not df_ev.empty:
+            fig_pie = px.pie(
                 loc_counts.head(8),
                 names="Reported Location",
                 values="Discovered Events",
                 color_discrete_sequence=px.colors.qualitative.Safe,
             )
-            fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
-            st.plotly_chart(fig, use_container_width=True)
+            fig_pie.update_layout(margin=dict(l=10, r=10, t=10, b=10))
+            st.plotly_chart(fig_pie, use_container_width=True)
 
 
 # -------------------------------------------------------------
