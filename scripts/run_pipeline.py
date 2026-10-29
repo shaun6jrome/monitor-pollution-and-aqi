@@ -92,14 +92,14 @@ def run_pipeline(force_refresh_news: bool = False) -> None:
     print(f"Total News Articles Ingested:    {repo.count_articles()}")
     print(f"Pollution-Related News Reports:  {repo.count_articles(only_pollution=True)}")
     print(f"Distinct Discovered Events:      {repo.count_events()}")
-    print(f"Active Semantic Encoder:         {disc_res['active_embedding_method']}")
+    print(f"Active Semantic Encoder:         {disc_res.get('active_embedding_method', getattr(emb_mgr, 'active_method', 'sentence_transformers'))}")
     print("-" * 70)
     print(f"Best Forecasting Model:          {ml_res['best_model']} (CO(GT) Target)")
     print(summary_df.to_string(index=False))
     print("-" * 70)
     print("Core Innovation: Multi-Criteria Deduplication vs Baselines")
-    for row in innov_res["comparison_table"]:
-        print(f" - {row['Method']}: {row['Discovered Events']} events (F1: {row['Pairwise F1']})")
+    for row in innov_res.get("comparison_table", []):
+        print(f" - {row.get('Method')}: {row.get('Discovered Events')} events (F1: {row.get('Pairwise F1')})")
     print("=" * 70 + "\n")
 
 
