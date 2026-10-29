@@ -139,8 +139,8 @@ def match_event_candidates(
     elif semantic_sim >= similarity_threshold:
         is_match = True
         decay = 1.0
-        if time_delta is not None and max_temporal_hours > 0:
-            norm_delta = min(time_delta, max_temporal_hours) / max_temporal_hours
+        if time_delta is not None and max_time_delta_hours > 0:
+            norm_delta = min(time_delta, max_time_delta_hours) / max_time_delta_hours
             decay = 1.0 - 0.25 * norm_delta
         combined_score = semantic_sim * decay
         reasons.append(
