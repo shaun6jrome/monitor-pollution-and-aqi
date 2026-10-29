@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Academic Project Report — Pollution Intelligence</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #0f172a;
+            line-height: 1.6;
+            font-size: 11pt;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #0f172a;
+            font-size: 22pt;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 8px;
+            margin-top: 0;
+        }
+        h2 {
+            color: #1e293b;
+            font-size: 15pt;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 4px;
+            margin-top: 24px;
+            page-break-after: avoid;
+        }
+        h3 {
+            color: #334155;
+            font-size: 12pt;
+            margin-top: 16px;
+            page-break-after: avoid;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            font-size: 9.5pt;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 6px 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+        pre.code-block {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            font-family: ui-monospace, Menlo, Monaco, monospace;
+            font-size: 9pt;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        code {
+            background-color: #f1f5f9;
+            padding: 2px 4px;
+            font-size: 9.5pt;
+            border-radius: 3px;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<h1>Evidence-Aware Pollution Event Discovery and Air-Quality Prediction Using Unstructured Data</h1>
+<p><strong>Academic Project Report — Data Science Ecosystem (DSE)</strong></p>
+<hr>
+<h2>1. Title Page</h2>
+<li>**Project Title:** Evidence-Aware Pollution Event Discovery and Air-Quality Prediction Using Unstructured Data</li>
+<li>**Project Domain:** Environmental Data Science, Applied Natural Language Processing, Machine Learning Systems</li>
+<li>**Target Audience:** Department of Data Science and Engineering / Academic Review Committee</li>
+<li>**Platform Repository:** `https://github.com/shaun6jrome/monitor-pollution-and-aqi`</li>
+<li>**Execution Environment:** macOS, Python 3.11, Streamlit, SQLite, Scikit-learn, XGBoost, GDELT DOC 2.0 API</li>
+<hr>
+<h2>2. Abstract</h2>
+<p>Continuous Ambient Air Quality Monitoring Stations (CAAQMS) provide high-precision physical concentration measurements but lack the contextual intelligence required to identify the human and industrial activities driving pollution episodes. Conversely, global news feeds report environmental incidents in real time, yet naive text analysis suffers from severe syndication overcounting, geographic conflation, and lack of evidentiary provenance.</p>
+<p>This project implements an end-to-end Data Science Ecosystem that:</p>
+<li>Ingests real-time environmental news via the GDELT DOC 2.0 API with SHA-256 deduplication and local disk caching.</li>
+<li>Cleans, normalizes, and classifies unstructured text using a supervised TF-IDF + Logistic Regression baseline and an environmental entity extraction gazetteer.</li>
+<li>Implements a multi-criteria event discovery engine combining semantic cosine embeddings, geographic boundary verification, a 72-hour temporal event window, and wire syndication auditing to discover distinct real-world incidents.</li>
+<li>Conducts rigorous chronological time-series regression modeling on the 9,358-observation historical UCI Air Quality multisensor dataset, comparing Linear Regression, Random Forest, and XGBoost with zero temporal lookahead data leakage.</li>
+<li>Deploys an interactive Streamlit environmental intelligence dashboard with verifiable data provenance, auditable input validation, and transparent limitation reporting.</li>
+<hr>
+<h2>3. Problem Statement</h2>
+<p>Existing environmental monitoring networks face two fundamental disconnects:</p>
+<li>**The Context Gap:** Physical sensors report concentration spikes (e.g. $450\ \mu g/m^3$ of PM2.5) without causal explanations (e.g. an unpermitted factory boiler release, open municipal waste burning, or crop residue incineration).</li>
+<li>**The Unstructured Information Redundancy Gap:** Naive aggregation of news articles treats every syndicated wire story (e.g. from PTI or ANI) as a distinct pollution event, inflating incident counts by over 100%. Furthermore, purely semantic grouping collapses distinct episodes across distant cities or weeks apart.</li>
+<p>The objective is to design, implement, and validate an automated data pipeline that bridges this divide by discovering distinct, deduplicated pollution events from unstructured news while maintaining a rigorous predictive modeling foundation.</p>
+<hr>
+<h2>4. Motivation and Scope</h2>
+<li>**Motivation:** Regulators and environmental policy bodies need rapid, evidence-grounded incident awareness to dispatch field inspectors and corroborate public grievances without being misled by artificial media duplication.</li>
+<li>**Scope Boundaries:** The system integrates three independent data streams: GDELT unstructured news (contemporary incident discovery), CPCB official station observations (government ground truth), and the UCI historical dataset (multisensor regression benchmarking). The project strictly avoids scientifically fraudulent claims of cross-source causality between non-aligned historical sensor data and contemporary news.</li>
+<hr>
+<h2>5. Objectives</h2>
+<li>Develop a fault-tolerant ingestion connector for the GDELT DOC 2.0 API with deterministic caching, rate-limit resilience, and respectful content extraction.</li>
+<li>Implement a complete NLP pipeline for Unicode normalization, boilerplate removal, pollution relevance classification, and entity extraction.</li>
+<li>Engineer a multi-criteria event discovery and deduplication engine combining semantic embeddings, geographic constraints, 72-hour temporal windows, and wire syndication auditing.</li>
+<li>Establish an empirical machine learning benchmark comparing Linear Regression, Random Forest, and XGBoost on chronological splits of the UCI dataset.</li>
+<li>Build an interactive environmental intelligence dashboard adhering to a professional graphite/charcoal design without decorative filler or fabricated metrics.</li>
+<hr>
+<h2>6. Existing Approaches and Limitations</h2>
+<table>
+<tr><th>Approach</th><th>Working Principle</th><th>Critical Limitation</th></tr>
+<tr><td>**Physical CAAQMS Stations**</td><td>Fixed electrochemical/optical point monitors</td><td>Highly localized point coverage; cannot identify human cause of pollution spikes.</td></tr>
+<tr><td>**Keyword Count News Aggregation**</td><td>Query news APIs for &quot;air pollution&quot; and count raw matches</td><td>Massive overcounting (100%+) due to syndicated wire republication across multiple domains.</td></tr>
+<tr><td>**Topic Modeling (LDA / LSA)**</td><td>Unsupervised Dirichlet topic clustering</td><td>Produces broad, static topics (&quot;smog&quot;, &quot;health&quot;) rather than discrete physical incidents.</td></tr>
+<tr><td>**Pure Semantic Embedding Clustering**</td><td>Cosine distance clustering on sentence vectors</td><td>Falsely merges distinct incidents in different cities (e.g. Mumbai vs Delhi) or weeks apart.</td></tr>
+</table>
+<hr>
+<h2>7. Proposed Methodology</h2>
+<p>The platform resolves these limitations through a four-stage pipeline:</p>
+<li>**Data Ingestion &amp; Persistence:** Bounded GDELT queries with SHA-256 URL hashing, SQLite WAL-mode transactional storage, and local JSON caching.</li>
+<li>**Text Normalization &amp; Classification:** NFKC Unicode standardization, URL/boilerplate filtering, and supervised TF-IDF + Logistic Regression classification.</li>
+<li>**Multi-Criteria Event Discovery:** Pairwise candidate matching enforcing semantic threshold ($\ge 0.68$), geographic compatibility, 72-hour temporal proximity, and source category alignment.</li>
+<li>**Leakage-Free Forecasting:** Chronological 80/20 train/test split, cyclical temporal encodings, historical lag features, and training-only median imputation.</li>
+<hr>
+<h2>8. System Architecture</h2>
+<p>The architecture separates external data ingestion, NLP processing, SQLite persistence, ML forecasting, and the Streamlit dashboard interface.</p>
+<pre class='code-block mermaid'>
+flowchart TD
+    GDELT[&quot;GDELT DOC 2.0 API&quot;] --&gt; GClient[&quot;GDELT Client &amp; Cache&quot;]
+    GClient --&gt; Extractor[&quot;Article Text Extractor&quot;]
+    Extractor --&gt; SQLite[(&quot;SQLite Database&quot;)]
+    
+    UCI[&quot;UCI Dataset (9,358 rows)&quot;] --&gt; Loader[&quot;Dataset Loader &amp; Imputer&quot;]
+    Loader --&gt; FE[&quot;Chronological Feature Engineering&quot;]
+    FE --&gt; Train[&quot;Train: LinearReg, RandomForest, XGBoost&quot;]
+    Train --&gt; SQLite
+    
+    SQLite --&gt; NLP[&quot;NLP Normalizer &amp; Classifier&quot;]
+    NLP --&gt; NER[&quot;Entity Extractor (Locations, Pollutants)&quot;]
+    NER --&gt; Cluster[&quot;Multi-Criteria Event Discovery&quot;]
+    Cluster --&gt; Provenance[&quot;Syndication &amp; Provenance Audit&quot;]
+    Provenance --&gt; SQLite
+    
+    SQLite --&gt; Dashboard[&quot;Streamlit Intelligence Dashboard&quot;]
+</pre>
+<hr>
+<h2>9. Data Source Descriptions</h2>
+<h3>9.1 GDELT DOC 2.0 API (Unstructured News Stream)</h3>
+<li>Endpoint: `https://api.gdeltproject.org/api/v2/doc/doc`</li>
+<li>Output Format: JSON (`mode=ArtList`, `format=json`, `sort=DateDesc`).</li>
+<li>Parameters: Configurable queries (`air pollution`, `industrial emissions`, `crop burning`, `factory smoke`).</li>
+<li>Role: Real-time and near-real-time environmental incident discovery.</li>
+<h3>9.2 UCI Machine Learning Repository: Air Quality Dataset</h3>
+<li>Reference: De Vito et al. (2008), University of California Irvine ML Repository (ID: 360).</li>
+<li>Coverage: 9,358 hourly observations from an Italian urban roadside monitoring station (March 2004 – April 2005).</li>
+<li>Fields: True chemical analyzer concentrations (`CO(GT)`, `NMHC(GT)`, `C6H6(GT)`, `NOx(GT)`, `NO2(GT)`) and 5 metal oxide chemical sensors (`PT08.S1` through `PT08.S5`), Temperature, Relative Humidity, and Absolute Humidity.</li>
+<li>Missingness Sentinel: `-200` converted to `NaN`.</li>
+<h3>9.3 Central Pollution Control Board (CPCB) / data.gov.in</h3>
+<li>Access: Official Indian Real-Time National Air Quality Index API.</li>
+<li>Role: Official ground truth ambient station measurements.</li>
+<hr>
+<h2>10. Unstructured-Data Processing Pipeline</h2>
+<li>**Normalization (`src/preprocessing/text_cleaner.py`):** Converts Unicode to standard NFKC, normalizes typographic quotes/dashes, strips news syndication disclaimers, and removes web URLs while strictly preserving chemical symbols (`PM2.5`, `PM10`, `NO2`, `SO2`, `CO`).</li>
+<li>**Relevance Classifier (`src/preprocessing/event_classifier.py`):** Fits TF-IDF on a transparent domain corpus with Logistic Regression ($C=1.0$). Classifies articles into 1 (pollution), 0 (not pollution), or -1 (uncertain).</li>
+<li>**Entity Extraction (`src/preprocessing/location_extractor.py`):** Uses an environmental gazetteer covering 30+ major monitoring hubs, chemical pollutant regexes, and 8 emission source categories with exact character spans.</li>
+<hr>
+<h2>11. Event Detection and Provenance Methodology</h2>
+<h3>11.1 Multi-Criteria Matching Engine</h3>
+<p>Two candidate articles $A$ and $B$ are clustered into the same incident if and only if:</p>
+<table>
+<tr><th>t_A - t_B</th></tr>
+</table>
+<h3>11.2 Provenance and Syndication Auditing</h3>
+<li>**Wire Syndication:** Articles published across separate domains with text similarity $\ge 0.85$ or shared agency attribution tags (PTI, ANI) are flagged as syndicated clones, preventing duplicate event creation.</li>
+<li>**Evidence Quality Scoring:** Calibrates confidence from $0.50$ (single-source report) to $0.90$ (multi-domain independent reporting).</li>
+<hr>
+<h2>12. Machine Learning Algorithms</h2>
+<li>**Linear Regression (Baseline):** Parametric ordinary least squares regression with standard feature normalization.</li>
+<li>**Random Forest Regressor:** Bagging ensemble of 100 decision trees (max depth 12, min samples split 4) capturing non-linear sensor cross-sensitivities.</li>
+<li>**XGBoost Regressor:** Gradient boosted regression trees optimizing mean squared error (100 estimators, learning rate 0.08, max depth 5, subsample 0.85).</li>
+<hr>
+<h2>13. Feature Engineering and Leakage Prevention</h2>
+<li>**Temporal Cyclical Encodings:** 24-hour diurnal ($\sin(2\pi h/24)$, $\cos(2\pi h/24)$) and 12-month seasonal cycles ($\sin(2\pi m/12)$, $\cos(2\pi m/12)$).</li>
+<li>**Historical Lags:** Target lags at $t-1, t-2, t-3, t-24$ without lookahead.</li>
+<li>**Rolling Window Aggregations:** 6-hour rolling mean and standard deviation computed strictly on past observations (`closed=&#x27;left&#x27;`).</li>
+<li>**Leakage-Free Imputation:** Feature medians calculated strictly on training rows ($80\%$) and applied to test rows ($20\%$).</li>
+<hr>
+<h2>14. Experimental Design</h2>
+<li>**Chronological Split:** Chronological 80% train / 20% test split.</li>
+<li>**Evaluation Criteria:**</li>
+<table>
+<tr><th>y_i - \hat{y}_i</th></tr>
+</table>
+<li>Root Mean Squared Error (RMSE): $\sqrt{\frac{1}{n} \sum (y_i - \hat{y}_i)^2}$</li>
+<li>Coefficient of Determination ($R^2$): $1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}$</li>
+<hr>
+<h2>15. Actual Model Evaluation Results</h2>
+<p>Models were trained and evaluated on identical held-out test rows for target <code>CO(GT)</code> concentration ($mg/m^3$):</p>
+<table>
+<tr><th>Model Name</th><th>Target Pollutant</th><th>Test Samples</th><th>Test MAE ($mg/m^3$)</th><th>Test RMSE ($mg/m^3$)</th><th>Test $R^2$</th><th>Selection Status</th></tr>
+<tr><td>**Linear Regression**</td><td>CO(GT)</td><td>1,535</td><td>0.4412</td><td>0.6284</td><td>0.8120</td><td>Baseline</td></tr>
+<tr><td>**Random Forest**</td><td>CO(GT)</td><td>1,535</td><td>0.3245</td><td>0.4718</td><td>0.8942</td><td>Non-linear Ensemble</td></tr>
+<tr><td>**XGBoost Regressor**</td><td>CO(GT)</td><td>1,535</td><td>**0.3108**</td><td>**0.4521**</td><td>**0.9031**</td><td>**Selected Best (Lowest RMSE)**</td></tr>
+</table>
+<p>*Observation:* Both ensemble methods substantially outperform Linear Regression. XGBoost achieved the lowest test RMSE ($0.4521\ mg/m^3$), successfully explaining over $90\%$ of variance on unseen future test observations.</p>
+<hr>
+<h2>16. Actual Event-Detection Evaluation Results</h2>
+<p>Evaluated on a reviewed ground-truth benchmark of 10 articles representing 5 distinct physical incidents with syndicated duplicates and cross-city reports:</p>
+<table>
+<tr><th>Evaluation Metric</th><th>Baseline 1 (Keyword Count)</th><th>Baseline 2 (Semantic Only)</th><th>Proposed Multi-Criteria Discovery</th></tr>
+<tr><td>**Discovered Events**</td><td>10 (100% inflation)</td><td>6 (false city merge)</td><td>**5 (Exact Ground Truth Match)**</td></tr>
+<tr><td>**Pairwise Precision**</td><td>0.0000</td><td>0.6250</td><td>**1.0000**</td></tr>
+<tr><td>**Pairwise Recall**</td><td>0.0000</td><td>0.8333</td><td>**1.0000**</td></tr>
+<tr><td>**Pairwise F1-Score**</td><td>0.0000</td><td>0.7143</td><td>**1.0000**</td></tr>
+</table>
+<hr>
+<h2>17. Dashboard Screenshots and Interface Walkthrough</h2>
+<p>The platform interface comprises 9 distinct pages:</p>
+<li>**Overview:** System telemetry, category distribution, recent incident cards, and CPCB official feed status.</li>
+<li>**News Intelligence:** Real-time GDELT query controls, extraction status, and search filters.</li>
+<li>**Pollution Event Explorer:** Multi-criteria clustering trigger, event drilldown, and provenance audit cards.</li>
+<li>**Geographic View:** Spatial distribution frequency table avoiding fabricated coordinate pins.</li>
+<li>**ML Laboratory:** UCI dataset schema diagnostics, missingness breakdown, and model evaluation charts.</li>
+<li>**Forecasting:** Interactive prediction interface with bounded numerical inputs and domain validation.</li>
+<li>**Innovation Evaluation:** Side-by-side benchmark comparison of event discovery pipelines.</li>
+<li>**Data Sources &amp; Methodology:** Full provenance, URLs, and licensing documentation.</li>
+<li>**Project Documentation &amp; Exports:** Live downloads for CSV and JSON audit datasets.</li>
+<hr>
+<h2>18. Results and Discussion</h2>
+<li>**Deduplication Effectiveness:** Multi-criteria clustering successfully eliminates syndication inflation while preventing false merges across distant regions.</li>
+<li>**Predictive Capability:** Historical sensor modeling confirms that non-linear tree ensembles effectively calibrate solid-state chemical sensors against true reference analyzer concentrations.</li>
+<li>**Scientific Separation:** Maintaining strict boundaries between Italian historical sensor data and contemporary Indian news prevents data contamination and preserves academic integrity.</li>
+<hr>
+<h2>19. Limitations</h2>
+<li>**Non-Alignment Between Datasets:** The 2004–2005 Italian sensor dataset and modern GDELT news cannot be joined for direct cross-source training without scientific invalidity.</li>
+<li>**Media Reporting Bias:** News coverage disproportionately favors major capital cities over rural areas.</li>
+<li>**Textual Location Resolution:** Geographic locations remain textual entities unless an official geocoding service is configured.</li>
+<hr>
+<h2>20. Ethical, Privacy, and Data-Licensing Considerations</h2>
+<li>**Respectful Scraping:** Respects publisher terms, robots rules, and HTTP 401/403 paywalls.</li>
+<li>**Licensing:**</li>
+<li>UCI Air Quality: CC BY 4.0 Open Access.</li>
+<li>GDELT Project: Open Research Access.</li>
+<li>CPCB / data.gov.in: Government Open Data License - India (GODL).</li>
+<li>**No Personal Data:** Exclusively processes ambient environmental measurements and public journalistic reports.</li>
+<hr>
+<h2>21. Conclusion</h2>
+<p>The platform successfully implements an end-to-end Data Science Ecosystem bridging the gap between physical sensor measurements and unstructured media reports. By introducing multi-criteria event discovery and wire syndication auditing, the system eliminates duplicate reporting inflation while delivering robust, leakage-free historical pollutant forecasting.</p>
+<hr>
+<h2>22. Future Work</h2>
+<li>**Hyperlocal Sensor-Text Collocation:** Deploying the pipeline in an Indian metropolitan area pairing municipal CAAQMS stations with regional vernacular news feeds and public grievance redressal portals.</li>
+<li>**Automated Geocoding:** Integrating an official reverse geocoding API to map textual landmarks to verified latitude/longitude coordinates.</li>
+<li>**Transformer Fine-Tuning:** Domain-adaptive pretraining of language models on environmental regulatory enforcement documentation.</li>
+<hr>
+<h2>23. References</h2>
+<li>De Vito, S., et al. (2008). &quot;On-field calibration of an electronic nose for benzene estimation in an urban environment.&quot; *Sensors and Actuators B: Chemical*, 129(2), 750-757.</li>
+<li>GDELT Project. (2024). &quot;GDELT DOC 2.0 API Documentation.&quot; Available: `https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/`.</li>
+<li>Central Pollution Control Board (CPCB). (2014). &quot;National Air Quality Index.&quot; Ministry of Environment, Forest and Climate Change, Government of India.</li>
+<li>Chen, T., &amp; Guestrin, C. (2016). &quot;XGBoost: A Scalable Tree Boosting System.&quot; *ACM SIGKDD International Conference on Knowledge Discovery and Data Mining*, 785-794.</li>
+<li>Reimers, N., &amp; Gurevych, I. (2019). &quot;Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks.&quot; *EMNLP-IJCNLP*, 3982-3992.</li>
+<hr>
+<h2>24. Reproduction Instructions</h2>
+<li>**Clone Repository:**</li>
+<pre class='code-block bash'>
+   git clone https://github.com/shaun6jrome/monitor-pollution-and-aqi.git
+   cd monitor-pollution-and-aqi
+</pre>
+<li>**Set Up Python Environment:**</li>
+<pre class='code-block bash'>
+   python3.11 -m venv .venv
+   source .venv/bin/activate
+   pip install --upgrade pip
+   pip install -r requirements.txt
+</pre>
+<li>**Acquire Historical Dataset:**</li>
+<pre class='code-block bash'>
+   python scripts/download_dataset.py
+</pre>
+<li>**Train Forecasting Models:**</li>
+<pre class='code-block bash'>
+   python scripts/train_models.py
+</pre>
+<li>**Run Automated Test Suite:**</li>
+<pre class='code-block bash'>
+   pytest tests/ -v
+</pre>
+<li>**Launch Streamlit Application:**</li>
+<pre class='code-block bash'>
+   streamlit run app.py
+</pre>
+<p>Open <code>http://localhost:8501</code> in your browser.</p>
+</body>
+</html>
