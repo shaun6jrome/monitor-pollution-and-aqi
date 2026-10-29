@@ -440,25 +440,23 @@ def page_event_explorer(repo: PollutionRepository):
     # Export Controls
     col_dl1, col_dl2 = st.columns(2)
     with col_dl1:
-        csv_file = export_events_to_csv(events)
-        with open(csv_file, "r", encoding="utf-8") as f:
-            st.download_button(
-                "Export Discovered Events (CSV)",
-                data=f.read(),
-                file_name="discovered_events.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
+        csv_data = export_events_to_csv(events)
+        st.download_button(
+            "Export Discovered Events (CSV)",
+            data=csv_data,
+            file_name="discovered_events.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
     with col_dl2:
-        json_file = export_events_to_json(events)
-        with open(json_file, "r", encoding="utf-8") as f:
-            st.download_button(
-                "Export Provenance Audit (JSON)",
-                data=f.read(),
-                file_name="events_provenance_audit.json",
-                mime="application/json",
-                use_container_width=True,
-            )
+        json_data = export_events_to_json(events)
+        st.download_button(
+            "Export Provenance Audit (JSON)",
+            data=json_data,
+            file_name="events_provenance_audit.json",
+            mime="application/json",
+            use_container_width=True,
+        )
 
     st.markdown("---")
     # Select event for detailed drilldown
