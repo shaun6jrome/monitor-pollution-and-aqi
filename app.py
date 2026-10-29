@@ -747,6 +747,50 @@ def page_forecasting():
         else:
             st.error(f"Prediction failed: {res.get('error')}")
 
+    st.markdown("---")
+    st.subheader("Multi-Step Ahead Autoregressive Forecast Horizon")
+    st.caption("Recursively feeds back model predictions into autoregressive lag features across future hours.")
+
+    col_h1, col_h2 = st.columns([1, 3])
+    with col_h1:
+        horizon_steps = st.slider("Forecast Horizon (Hours)", min_value=2, max_value=12, value=6, step=1)
+        multi_step_btn = st.button("Generate Horizon Trajectory")
+
+    if multi_step_btn:
+        input_dict = {
+            "T": temp,
+            "RH": rh,
+            "AH": ah,
+            "PT08.S1(CO)": s1_co,
+            "PT08.S2(NMHC)": s2_nmhc,
+            "PT08.S3(NOx)": s3_nox,
+            "hour": hour_val,
+            "month": month_val,
+            f"{predictor.target_col}_lag_1": co_lag1,
+        }
+        with st.spinner("Computing recursive autoregressive forecasts..."):
+            m_res = predictor.predict_multi_step(input_dict, steps=horizon_steps)
+            if m_res["status"] == "SUCCESS":
+                df_traj = pd.DataFrame(m_res["forecasts"])
+                df_traj["Hour Label"] = df_traj["hour"].apply(lambda h: f"{h:02d}:00")
+
+                with col_h2:
+                    fig_traj = px.line(
+                        df_traj,
+                        x="Hour Label",
+                        y="predicted_value",
+                        markers=True,
+                        title=f"{horizon_steps}-Hour Forward Concentration Trajectory ({predictor.target_col})",
+                        labels={"predicted_value": f"{predictor.target_col} ({predictor.target_unit})", "Hour Label": "Time of Day"},
+                    )
+                    fig_traj.update_traces(line_color="#059669", line_width=3, marker=dict(size=8, color="#0f172a"))
+                    fig_traj.update_layout(margin=dict(l=10, r=10, t=40, b=10))
+                    st.plotly_chart(fig_traj, use_container_width=True)
+
+                st.dataframe(df_traj[["step", "Hour Label", "predicted_value", "unit"]], use_container_width=True)
+            else:
+                st.error(f"Multi-step forecast error: {m_res.get('error')}")
+
 
 # -------------------------------------------------------------
 # Page G: Innovation Evaluation
