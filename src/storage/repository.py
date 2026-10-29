@@ -302,6 +302,9 @@ class PollutionRepository:
             evidence_summary, uncertainty_notes, provenance_summary,
             status, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            updated_at = excluded.updated_at,
+            evidence_summary = excluded.evidence_summary
         """
         with self._get_connection() as conn:
             conn.execute(
@@ -426,6 +429,12 @@ class PollutionRepository:
         with self._get_connection() as conn:
             row = conn.execute("SELECT COUNT(*) as cnt FROM events").fetchone()
             return row["cnt"] if row else 0
+
+    def is_article_in_any_event(self, article_id: str) -> bool:
+        """Check if an article has already been linked to an event."""
+        with self._get_connection() as conn:
+            row = conn.execute("SELECT 1 FROM event_articles WHERE article_id = ? LIMIT 1", (article_id,)).fetchone()
+            return row is not None
 
     # ---------------------------------------------------------
     # Retrieval Logs

@@ -69,6 +69,8 @@ class EventAggregator:
 
         for art in sorted_articles:
             art_id = art["id"]
+            if self.repository.is_article_in_any_event(art_id):
+                continue
             title = art.get("title", "")
             content = art.get("content_normalized") or art.get("content_raw") or ""
             full_text = f"{title} {content}".strip()
