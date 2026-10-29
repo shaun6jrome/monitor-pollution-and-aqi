@@ -114,78 +114,95 @@ class GDELTClient:
             "Accept": "application/json, text/plain, */*",
         }
 
-        try:
-            response = requests.get(
-                config.GDELT_BASE_URL,
-                params=params,
-                headers=headers,
-                timeout=self.timeout,
-            )
-
-            if response.status_code != 200:
-                error_msg = f"GDELT API returned HTTP {response.status_code}: {response.text[:120]}"
-                logger.error(error_msg)
-                self.repository.log_retrieval("GDELT", query, "FAILED", error_message=error_msg)
-                return [], {
-                    "status": "FAILED",
-                    "source": "api_error",
-                    "error": error_msg,
-                    "total_retrieved": 0,
-                    "query": query,
-                }
-
-            # Parse JSON response
-            text = response.text.strip()
-            # GDELT occasionally returns plain text message on empty match or rate limit
-            if not text or not text.startswith("{"):
-                meta = {
-                    "status": "NO_DATA",
-                    "source": "api",
-                    "message": "GDELT returned no structured JSON (possibly 0 results for query)",
-                    "total_retrieved": 0,
-                    "query": query,
-                }
-                self.repository.log_retrieval("GDELT", query, "NO_DATA", 0, 0, 0)
-                return [], meta
-
-            data = response.json()
-            raw_articles = data.get("articles", [])
-
-            # Write to cache
-            cache_payload = {
-                "query": query,
-                "cached_at": datetime.now(timezone.utc).isoformat(),
-                "cached_at_ts": now_ts,
-                "articles": raw_articles,
-            }
+        import time
+        max_retries = 2
+        raw_articles = []
+        for attempt in range(max_retries):
             try:
-                with open(cache_path, "w", encoding="utf-8") as f:
-                    json.dump(cache_payload, f, indent=2)
+                response = requests.get(
+                    config.GDELT_BASE_URL,
+                    params=params,
+                    headers=headers,
+                    timeout=self.timeout,
+                )
+
+                if response.status_code == 429 and attempt < max_retries - 1:
+                    logger.warning("GDELT rate limit encountered (HTTP 429). Waiting 6 seconds before retry...")
+                    time.sleep(6)
+                    continue
+
+                if response.status_code != 200:
+                    error_msg = f"GDELT API returned HTTP {response.status_code}: {response.text[:120]}"
+                    logger.error(error_msg)
+                    self.repository.log_retrieval("GDELT", query, "FAILED", error_message=error_msg)
+                    return [], {
+                        "status": "FAILED",
+                        "source": "api_error",
+                        "error": error_msg,
+                        "total_retrieved": 0,
+                        "query": query,
+                    }
+
+                # Parse JSON response
+                text = response.text.strip()
+                # GDELT occasionally returns plain text message on empty match or rate limit
+                if not text or not text.startswith("{"):
+                    meta = {
+                        "status": "NO_DATA",
+                        "source": "api",
+                        "message": "GDELT returned no structured JSON (possibly 0 results for query)",
+                        "total_retrieved": 0,
+                        "query": query,
+                    }
+                    self.repository.log_retrieval("GDELT", query, "NO_DATA", 0, 0, 0)
+                    return [], meta
+
+                data = response.json()
+                raw_articles = data.get("articles", [])
+                break
+            except requests.Timeout:
+                err = f"GDELT request timed out after {self.timeout}s"
+                if attempt < max_retries - 1:
+                    logger.warning("%s. Retrying in 3 seconds...", err)
+                    time.sleep(3)
+                    continue
+                logger.warning(err)
+                self.repository.log_retrieval("GDELT", query, "TIMEOUT", error_message=err)
+                return [], {"status": "TIMEOUT", "error": err, "total_retrieved": 0, "query": query}
+            except requests.RequestException as e:
+                err = f"Network error contacting GDELT: {e}"
+                if attempt < max_retries - 1:
+                    logger.warning("%s. Retrying in 3 seconds...", err)
+                    time.sleep(3)
+                    continue
+                logger.warning(err)
+                self.repository.log_retrieval("GDELT", query, "NETWORK_ERROR", error_message=str(e))
+                return [], {"status": "NETWORK_ERROR", "error": str(e), "total_retrieved": 0, "query": query}
             except Exception as e:
-                logger.warning("Could not write GDELT cache: %s", e)
+                err = f"Unexpected error during GDELT retrieval: {e}"
+                logger.error(err)
+                return [], {"status": "ERROR", "error": str(e), "total_retrieved": 0, "query": query}
 
-            meta = {
-                "status": "LIVE_SUCCESS",
-                "source": "api",
-                "total_retrieved": len(raw_articles),
-                "query": query,
-            }
-            return raw_articles, meta
-
-        except requests.Timeout:
-            err = f"GDELT request timed out after {self.timeout}s"
-            logger.warning(err)
-            self.repository.log_retrieval("GDELT", query, "TIMEOUT", error_message=err)
-            return [], {"status": "TIMEOUT", "error": err, "total_retrieved": 0, "query": query}
-        except requests.RequestException as e:
-            err = f"Network error contacting GDELT: {e}"
-            logger.warning(err)
-            self.repository.log_retrieval("GDELT", query, "NETWORK_ERROR", error_message=str(e))
-            return [], {"status": "NETWORK_ERROR", "error": str(e), "total_retrieved": 0, "query": query}
+        # Write to cache
+        cache_payload = {
+            "query": query,
+            "cached_at": datetime.now(timezone.utc).isoformat(),
+            "cached_at_ts": now_ts,
+            "articles": raw_articles,
+        }
+        try:
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(cache_payload, f, indent=2)
         except Exception as e:
-            err = f"Unexpected error during GDELT retrieval: {e}"
-            logger.error(err)
-            return [], {"status": "ERROR", "error": str(e), "total_retrieved": 0, "query": query}
+            logger.warning("Could not write GDELT cache: %s", e)
+
+        meta = {
+            "status": "LIVE_SUCCESS",
+            "source": "api",
+            "total_retrieved": len(raw_articles),
+            "query": query,
+        }
+        return raw_articles, meta
 
     def ingest_query_results(
         self,
